@@ -19,7 +19,7 @@
         const tl = gsap.timeline();
         tl.to(".header-1", {
             duration: 1.5,
-            text: "Head-to-head code battle",
+            text: "Head-to-head coding battle",
             ease: "none"
         });
         tl.to(".header-2", {
