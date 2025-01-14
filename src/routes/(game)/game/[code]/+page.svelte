@@ -373,10 +373,10 @@
                         <div
                             class="flex items-center justify-between bg-neutral p-1 text-neutral-foreground"
                         >
-                            <div class="flex gap-1 items-center">
+                            <div class="flex items-center gap-1">
                                 {#each tabs as tab, i}
                                     <button
-                                        class="flex items-center cursor-pointer rounded-sm p-1 pr-2 hover:bg-secondary/50 {selected ==
+                                        class="flex cursor-pointer items-center rounded-sm p-1 pr-2 hover:bg-secondary/50 {selected ==
                                         i
                                             ? 'bg-secondary/50'
                                             : 'text-foreground/50'}"

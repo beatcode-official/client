@@ -96,7 +96,7 @@
                 </div>
                 <div
                     bind:this={chatContainer}
-                    class="flex h-full flex-col overflow-x-hidden overflow-y-auto bg-background-dark px-4 pb-4 pt-2"
+                    class="flex h-full flex-col overflow-y-auto overflow-x-hidden bg-background-dark px-4 pb-4 pt-2"
                 >
                     <div class="flex-1"></div>
                     <div class="grid w-full auto-rows-min grid-rows-[1fr_auto] space-y-2">

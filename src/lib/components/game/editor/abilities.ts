@@ -22,7 +22,12 @@ export const handleDeletio = (view: EditorView) => {
     });
 };
 
-export const handleSyntaxio = (view: EditorView, lang: LanguageSupport, exts: any[], time = 30000) => {
+export const handleSyntaxio = (
+    view: EditorView,
+    lang: LanguageSupport,
+    exts: any[],
+    time = 30000
+) => {
     const originalExts = exts;
     exts = exts.filter((ext) => ext !== lang);
     view.dispatch({
@@ -51,12 +56,17 @@ export const handleLightio = (view: EditorView, exts: any[], time = 30000) => {
     }, time);
 };
 
-export const handleSizeChange = (view: EditorView, fontSize: Compartment, sizeMul: number, time = 30000) => {
+export const handleSizeChange = (
+    view: EditorView,
+    fontSize: Compartment,
+    sizeMul: number,
+    time = 30000
+) => {
     const baseSize = 13;
     view.dispatch({
         effects: fontSize.reconfigure(
             EditorView.editorAttributes.of({
-                style: "font-size: " + (baseSize * sizeMul) + "px"
+                style: "font-size: " + baseSize * sizeMul + "px"
             })
         )
     });
@@ -69,4 +79,4 @@ export const handleSizeChange = (view: EditorView, fontSize: Compartment, sizeMu
             )
         });
     }, time);
-}
+};
