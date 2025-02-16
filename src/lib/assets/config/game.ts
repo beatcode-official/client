@@ -8,6 +8,9 @@ import {
 } from "@codemirror/view";
 import { Prec } from "@codemirror/state";
 import { O_1, OLogn, ON, ONLogn, ONSquared, O_2n, ONFac } from "$assets/images/ranks";
+import { python } from "@codemirror/lang-python";
+import { java } from "@codemirror/lang-java";
+import { cpp } from "@codemirror/lang-cpp";
 
 export const Ratings = [
     { name: "O(n!)", class: "bg-gradient-to-br from-neutral-700 to-neutral-600", badge: ONFac },
@@ -110,4 +113,19 @@ export const DifficultiesStyle = {
     easy: "text-green-400",
     medium: "text-amber-400",
     hard: "text-red-400"
+};
+
+export const LanguageConfig = {
+    python: {
+        name: "Python",
+        support: python()
+    },
+    java: {
+        name: "Java",
+        support: java()
+    },
+    cpp: {
+        name: "C++",
+        support: cpp()
+    }
 };

@@ -4,7 +4,7 @@
     import type { PageProps } from "./$types";
     import { goto } from "$app/navigation";
     import { createWebSocket } from "$lib/websocket.svelte";
-    import type { GameState, ProblemDetails, SubmissionResults } from "$models/game";
+    import type { GameState, Languages, ProblemDetails, SubmissionResults } from "$models/game";
     import type { ChatMessage } from "$models/room";
 
     import AvatarImg from "$assets/images/avatar.jpg";
@@ -14,6 +14,7 @@
     import * as Dialog from "$components/ui/dialog";
     import { Progress } from "$components/ui/progress";
     import * as Resizable from "$components/ui/resizable";
+    import * as Select from "$components/ui/select";
     import * as Tooltip from "$components/ui/tooltip";
 
     import { Problem, Test, Abilities } from "$components/game/panel";
@@ -29,21 +30,28 @@
         CheckSquare,
         Loader,
         LogOut,
-        Sparkles
+        Sparkles,
+        WifiIcon
     } from "lucide-svelte";
+    import { LanguageConfig } from "$assets/config/game";
 
     let { data }: PageProps = $props();
     let selected = $state<number>(0);
+    let isGameStarted = $state<boolean>(false);
     let gameState = $state<GameState>();
+
     let currentProblem = $state<ProblemDetails>();
+    let isProblemSolved = $state<boolean>(false);
+
     let isSubmitting = $state(false);
     let submissionTimeout = $state<ReturnType<typeof setTimeout>>();
     let submissionResults = $state<SubmissionResults>();
-    let isProblemSolved = $state<boolean>(false);
     let runtimeAnalysis = $state<string>();
+
     let winner = $state<string | null>(null);
     let isWinner = $derived(winner === data.user?.username);
 
+    let currentLang = $state<Languages>((localStorage.getItem("lang") as Languages) || "python");
     let lightMode = $state<boolean>(false);
 
     let chatHistory = $state<ChatMessage[]>([]);
@@ -58,9 +66,31 @@
 
     // Reset code editor when new problem is received
     $effect(() => {
-        editorData.setCode(
-            `${currentProblem?.boilerplate ?? "class Solution:\n    def pleaseWait():"}\n    `
-        );
+        if (currentProblem) {
+            if (
+                !localStorage.getItem("cachedProblemTitle") ||
+                localStorage.getItem("cachedProblemTitle") !== currentProblem.title
+            ) {
+                resetLocalStorage();
+            }
+            localStorage.setItem("cachedProblemTitle", currentProblem.title);
+            for (const lang in LanguageConfig) {
+                if (localStorage.getItem(`${lang}CachedCode`)) {
+                    continue;
+                }
+                localStorage.setItem(
+                    `${lang}CachedCode`,
+                    currentProblem.boilerplate[lang as Languages]
+                );
+            }
+            editorData.setCode(currentProblem.boilerplate[currentLang]);
+        }
+    });
+
+    $effect(() => {
+        editorData.setLang(currentLang);
+        localStorage.setItem("lang", currentLang);
+        editorData.setCode(localStorage.getItem(`${currentLang}CachedCode`) ?? "");
     });
 
     const checkHP = (newState: GameState) => {
@@ -101,6 +131,13 @@
     ws.setUrl(`${data.websocketUrl}/game/play/${data.gameId}`);
     ws.connect();
 
+    const resetLocalStorage = () => {
+        localStorage.removeItem("cachedProblemTitle");
+        for (const lang in LanguageConfig) {
+            localStorage.removeItem(`${lang}CachedCode`);
+        }
+    };
+
     $effect(() => {
         if (ws.status === "CLOSED") {
             toast.error(ws.reason ?? "Failed to connect to game");
@@ -121,14 +158,13 @@
                     checkAbilityPurchase(data);
                     gameState = data;
                     break;
+                case "game_start":
+                    isGameStarted = true;
+                    break;
                 case "problem":
-                    if (
-                        !localStorage.getItem("cachedProblemTitle") ||
-                        localStorage.getItem("cachedProblemTitle") !== data.title
-                    ) {
-                        localStorage.removeItem("cachedCode");
+                    if (!isGameStarted) {
+                        isGameStarted = true;
                     }
-                    localStorage.setItem("cachedProblemTitle", data.title);
                     currentProblem = data;
                     submissionResults = undefined;
                     break;
@@ -164,18 +200,13 @@
                     }
                     break;
                 case "error":
-                    console.log(
-                        "RKJFDKLJFDKLFJDSLKFJSDLKFJDSLKFJDSKLJFDSKLJFDSKLFJDSKLF",
-                        data.message
-                    );
                     toast.error(data.message);
                     isSubmitting = false;
                     break;
                 case "match_end":
                     winner = data.winner;
                     isSubmitting = false;
-                    localStorage.removeItem("cachedProblemTitle");
-                    localStorage.removeItem("cachedCode");
+                    resetLocalStorage();
                     break;
                 default:
                     break;
@@ -219,7 +250,7 @@
         log("[SUBMIT]", code);
         isSubmitting = true;
         editorData.resetError();
-        ws.send("submit", { code });
+        ws.send("submit", { code, lang: currentLang });
         submissionTimeout = setTimeout(() => {
             toast.error("Seems like it's taking too long. You can try reloading the page");
         }, 30000);
@@ -297,8 +328,9 @@
                     </Tooltip.Trigger>
                     <Tooltip.Content
                         class="border border-secondary bg-background-dark text-sm text-foreground"
-                        >Leave game (Forfeit)</Tooltip.Content
                     >
+                        Leave game (Forfeit)
+                    </Tooltip.Content>
                 </Tooltip.Root>
             </Tooltip.Provider>
         </div>
@@ -350,6 +382,24 @@
                                 <SquareCode class="mr-1 p-1" />
                                 <span class="font-semibold">Code</span>
                             </div>
+                        </div>
+                        <div class="border-b-[1px] border-secondary/50 p-1">
+                            <Select.Root type="single" name="language" bind:value={currentLang}>
+                                <Select.Trigger
+                                    class="h-fit w-fit rounded-sm border-0 px-2 py-1 hover:bg-secondary/25 focus:ring-0"
+                                >
+                                    <span class="mr-1">
+                                        {LanguageConfig[currentLang].name}
+                                    </span>
+                                </Select.Trigger>
+                                <Select.Content class="left-6">
+                                    {#each Object.entries(LanguageConfig) as [key, value]}
+                                        <Select.Item value={key} class="cursor-pointer">
+                                            {value.name}
+                                        </Select.Item>
+                                    {/each}
+                                </Select.Content>
+                            </Select.Root>
                         </div>
                         <div
                             class="h-full w-full overflow-auto px-4 py-2 {lightMode
@@ -406,6 +456,14 @@
         </Resizable.Pane>
     </Resizable.PaneGroup>
 </div>
+<Dialog.Root open={!isGameStarted}>
+    <Dialog.Content class="sm:max-w-[425px]" hideCloseButton interactOutsideBehavior="ignore">
+        <div class="my-4 flex flex-col items-center">
+            <WifiIcon class="mb-8 h-16 w-16 animate-pulse" />
+            <div class="mb-10 font-icon text-2xl font-bold">Waiting for opponent</div>
+        </div>
+    </Dialog.Content>
+</Dialog.Root>
 <Dialog.Root open={winner !== null}>
     <Dialog.Content class="sm:max-w-[425px]" hideCloseButton interactOutsideBehavior="ignore">
         <div class="my-4 flex flex-col items-center">

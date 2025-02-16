@@ -14,6 +14,16 @@
     let selectedError = $derived<string | undefined | null>(testCases[selected]?.error);
     let selectedExpected = $derived<string | undefined | null>(testCases[selected]?.expected);
 
+    function parseArguments(input: string): string[] {
+        const regex = /--arg\d+=(.*?)(?=\s--arg\d+|$)/g;
+        const matches = [];
+        let match;
+        while ((match = regex.exec(input)) !== null) {
+            matches.push(match[1]);
+        }
+        return matches;
+    }
+
     $effect(() => {
         if (results?.sample_results && results?.test_results) {
             testCases = [...results.sample_results, ...results.test_results];
@@ -59,8 +69,12 @@
                     {#if testCases[selected]?.input_data}
                         <div>
                             <h4 class="mb-2 text-xs font-medium text-secondary/75">Input</h4>
-                            <div class="rounded-sm bg-neutral p-3 font-mono">
-                                {testCases[selected].input_data}
+                            <div class="space-y-2">
+                                {#each parseArguments(testCases[selected].input_data ?? "--arg1=") as input}
+                                    <div class="rounded-sm bg-neutral p-3 font-mono">
+                                        {input}
+                                    </div>
+                                {/each}
                             </div>
                         </div>
                     {/if}

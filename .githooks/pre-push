@@ -6,16 +6,7 @@ set -e
 # Commands
 npm install
 
-echo "Running formatter..."
-npm run format
-
-echo "Staging formatted files..."
-git add -u
-
-echo "Committing staged changes..."
-git commit -m "chore: format code before push"
-
-echo "Running linter..."
+echo "Running linter... (Please run `npm run format` before pushing)"
 npm run lint
 
 echo "Running tests..."

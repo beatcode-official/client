@@ -1,28 +1,30 @@
 import { basicSetup, EditorView } from "codemirror";
-import { Compartment, EditorState, Prec } from "@codemirror/state";
+import { Compartment, EditorState, Prec, type Extension } from "@codemirror/state";
 import { acceptCompletion } from "@codemirror/autocomplete";
 import { indentWithTab } from "@codemirror/commands";
 import { lintGutter, setDiagnostics, type Diagnostic } from "@codemirror/lint";
-import { indentUnit, type LanguageSupport } from "@codemirror/language";
-import { python } from "@codemirror/lang-python";
+import { indentUnit } from "@codemirror/language";
 import { keymap } from "@codemirror/view";
 import { indentationMarkers } from "@replit/codemirror-indentation-markers";
 
 import { DefaultTheme } from "./themes";
 import { handleDeletio, handleSyntaxio, handleLightio, handleSizeChange } from "./abilities";
-import { Abilities, AbilitiesHighlighters } from "$assets/config/game";
+import { Abilities, AbilitiesHighlighters, LanguageConfig } from "$assets/config/game";
+import type { Languages } from "$lib/models/game";
 
 const fontSize = new Compartment();
+const language = new Compartment();
 
 export class EditorData {
     #view: EditorView | null = null;
-    #lang: LanguageSupport = python();
+    lang: Languages = "python";
+    #langExt: Extension = language.of(LanguageConfig[this.lang].support);
     #tabSize: number = 4;
     #useAbility: (ability: string) => void = (ability: string) => ability !== "";
     #exts = [
         basicSetup,
         DefaultTheme,
-        this.#lang,
+        this.#langExt,
         indentUnit.of(" ".repeat(this.#tabSize)),
         indentationMarkers(),
         lintGutter(),
@@ -43,7 +45,7 @@ export class EditorData {
         }),
         EditorView.updateListener.of((update) => {
             if (update.docChanged) {
-                localStorage.setItem("cachedCode", update.state.doc.toString());
+                localStorage.setItem(`${this.lang}CachedCode`, update.state.doc.toString());
             }
         }),
         ...AbilitiesHighlighters,
@@ -84,7 +86,9 @@ export class EditorData {
 
     #setup() {
         if (!this.#view) throw new Error("Editor view not linked");
+        this.lang = (localStorage.getItem("lang") as Languages) || "python";
         this.#view.setState(this.#state);
+        this.setLang(this.lang);
     }
 
     link(view: EditorView, useAbility: (ability: string) => void) {
@@ -100,12 +104,20 @@ export class EditorData {
 
     setCode(code: string) {
         if (!this.#view) throw new Error("Editor view not linked");
-        const cachedCode = localStorage.getItem("cachedCode") || "";
+        const cachedCode = localStorage.getItem(`${this.lang}CachedCode`) || "";
         this.#state = EditorState.create({
             doc: cachedCode.trim() !== "" ? cachedCode : code,
             extensions: this.#exts
         });
         this.#view.setState(this.#state);
+    }
+
+    setLang(lang: Languages) {
+        if (!this.#view) throw new Error("Editor view not linked");
+        this.lang = lang;
+        this.#view.dispatch({
+            effects: language.reconfigure(LanguageConfig[lang].support)
+        });
     }
 
     processError(error: string) {
@@ -167,7 +179,7 @@ export class EditorData {
                 handleDeletio(this.#view);
                 break;
             case "syntaxio":
-                handleSyntaxio(this.#view, this.#lang, this.#exts);
+                handleSyntaxio(this.#view, this.#langExt, this.#exts);
                 break;
             case "lightio":
                 handleLightio(this.#view, this.#exts);

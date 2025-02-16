@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
+import tailwindcssTypography from "@tailwindcss/typography";
 import plugin from "tailwindcss/plugin";
 
 const config: Config = {
@@ -140,6 +141,7 @@ const config: Config = {
     },
     plugins: [
         tailwindcssAnimate,
+        tailwindcssTypography,
         plugin(function ({ addUtilities, matchUtilities, theme }) {
             addUtilities({
                 ".my-center": {

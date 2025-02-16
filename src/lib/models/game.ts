@@ -25,7 +25,11 @@ export interface ProblemDetails {
     difficulty: "easy" | "medium" | "hard";
     sample_test_cases: string[];
     sample_test_results: string[];
-    boilerplate: string; // code
+    boilerplate: {
+        python: string;
+        java: string;
+        cpp: string;
+    }; // starter code
 }
 
 export interface TestResult {
@@ -55,3 +59,5 @@ export interface Chat {
     sender: string;
     timestamp: number;
 }
+
+export type Languages = "python" | "java" | "cpp";
