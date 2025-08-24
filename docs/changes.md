@@ -2,6 +2,14 @@
 
 Keep up with the latest updates here :D
 
+## 2025-08-24
+
+### Fixed
+
+- Bug where saving profile on the google callback page loads indefinitely when username exists.
+
+---
+
 ## 2025-04-30
 
 ## Fixed

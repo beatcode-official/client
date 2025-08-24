@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { PageProps } from "./$types";
 
-    import { type Infer, superForm } from "sveltekit-superforms";
+    import { type Infer, setError, superForm } from "sveltekit-superforms";
     import { type RegisterWithGoogleData, RegisterWithGoogleSchema } from "$models/auth";
 
     import * as Card from "$components/ui/card";
@@ -28,7 +28,18 @@
                 onResult: async ({ result }) => {
                     if (result.type === "redirect") {
                         announce(result, "Account created successfully");
+                    } else if (result.type === "error") {
+                        isSubmitting = false;
+                    } else if (result.type === "failure") {
+                        const error = result.data.error;
+                        if (error && error.toLowerCase().includes("username")) {
+                            setError(registerForm, "username", error);
+                        }
+                        isSubmitting = false;
                     }
+                },
+                onError: () => {
+                    isSubmitting = false;
                 }
             });
         }
