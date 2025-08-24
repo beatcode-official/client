@@ -6,7 +6,7 @@ Keep up with the latest updates here :D
 
 ### Fixed
 
-- Bug where saving profile on the google callback page loads indefinitely when username exists.
+- Fixed profile saving loading indefinitely on Google callback page when username already exists ([#108](https://github.com/beatcode-official/client/pull/108)).
 
 ---
 
